@@ -7,59 +7,82 @@ use Illuminate\Http\Request;
 
 class BoardController
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
+        return view('boards.index', [
+            'boards' => auth()->user()->boards
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+
     public function create()
     {
-        //
+        return view('boards.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+
     public function store(Request $request)
     {
-        //
+        $formFields = $request->validate([
+            'title' => 'required|max:255',
+        ]);
+
+        $formFields['user_id'] = auth()->user()->id;
+
+        Board::create($formFields);
+
+        return redirect('/');
     }
 
-    /**
-     * Display the specified resource.
-     */
+
     public function show(Board $board)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Board $board)
+
+    public function edit($id)
     {
-        //
+        $board = Board::find($id);
+        if ($board->user_id != auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        return view('boards.edit', [
+            'board' => $board
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Board $board)
+
+    public function update(Request $request, Board $id)
     {
-        //
+        $board = Board::find($id);
+
+        if ($board->user_id != auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $formFields = $request->validate([
+            'title' => 'required|max:255',
+        ]);
+
+        $board->update($formFields);
+
+        return redirect('boards/' . $board->id);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Board $board)
+
+    public function destroy(Board $id)
     {
-        //
+        $board = Board::find($id);
+
+        if ($board->user_id != auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $board->delete();
+
+        return redirect('/boards');
     }
 }
